@@ -1,0 +1,91 @@
+# Big Picture Premium Supershow Overlay - Configuration Template
+# Copy this file to config.toml and customize for your setup
+
+[mqtt]
+# MQTT broker connection settings
+broker_host = "localhost"
+broker_port = 1883
+username = ""
+password = ""
+client_id_controller = "bpp_controller"
+client_id_production = "bpp_production"
+keepalive = 60
+reconnect_delay_min = 1
+reconnect_delay_max = 60
+
+[sync]
+# API endpoints for syncing card database and images
+api_base_url = "https://get-diced.com"
+cards_manifest_url = "/api/cards/manifest"
+cards_database_url = "/api/cards/database"
+images_manifest_url = "/api/images/manifest"
+images_base_url = "/images/mobile"
+
+# Sync behavior
+check_on_startup = true
+auto_sync = false
+sync_timeout = 300  # seconds
+
+[database]
+# Local database and image paths
+cards_db_path = "./data/cards.db"
+images_path = "./data/images/"
+local_manifest_path = "./data/local_manifest.json"
+
+[recorder]
+# Match recording settings
+output_directory = "./recordings/"
+auto_save = true
+pretty_print_json = true
+
+[controller_ui]
+# Controller desktop app UI settings
+theme = "dark"  # dark or light
+font_size = 12
+window_width = 1000
+window_height = 800
+remember_position = true
+
+[production_ui]
+# Production view overlay settings
+theme = "dark"  # dark or light
+
+# Window dimensions
+default_height = 150      # pixels for collapsed state
+expanded_height = 500     # pixels for expanded state
+default_width = 1920
+window_opacity = 0.95     # 0.0 to 1.0
+
+# Window behavior
+always_on_top = true
+frameless = true
+draggable = true
+auto_collapse_seconds = 10  # auto-collapse after inactivity
+
+# Display options
+show_card_thumbnails = true
+thumbnail_width = 60
+thumbnail_height = 84
+max_discard_visible = 4   # show first N cards in discard
+
+# Colors (RGB hex)
+background_color = "#1a1a1a"
+text_color = "#ffffff"
+accent_color = "#4a9eff"
+
+# Roll type colors
+power_color = "#ff4444"       # red
+technique_color = "#ff8800"   # orange
+agility_color = "#44ff44"     # green
+
+# Attack type colors
+strike_color = "#ffff44"      # yellow
+grapple_color = "#4444ff"     # blue
+submission_color = "#aa44ff"  # purple
+
+[logging]
+# Logging configuration
+level = "INFO"  # DEBUG, INFO, WARNING, ERROR, CRITICAL
+log_to_file = true
+log_file_path = "./logs/app.log"
+log_rotation = "daily"  # daily, weekly, or size-based

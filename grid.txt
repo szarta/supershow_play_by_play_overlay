@@ -1,0 +1,86 @@
+Big Picture Premium (BPP) Supershow Overlay
+-------------------------------------------
+Live stream announcer play by play app to assist viewers in understanding the
+state of the Supershow card game match.  To start the match is between 2
+competitors, future iterations could support tag teams (2 vs 2).  Ideally the
+match sequence can be captured as well, for serialization in a future "replay
+viewer".
+
+Control view and production view, production view is shared with stream,
+control view is only seen by controller, but sets the next state to show for
+production.
+
+I have the full card database I can package with this app, includes db for
+attributes as well as image DB.  The app should be Python, should work on
+Windows and Linux.  Control UI and Production UI should talk via sockets -
+theoretically they can exist on same machine or on two different machines.
+
+Competitor is clickable, cards are clickable for higher resolution image preview
+
+Control view needs to be able to update quantity and text of cards in play,
+discard, number of cards in hand, turns won, turns passed, last turn roll type
+and number.  Ideally a record of the match would include all rolls, all cards
+played and discarded, and statistics of match like number of turns won, passed.
+
+The Control UI should capture the record of the sequence of events for a match.
+There will need to be a button for turn phases:
+
+Turn roll phase: both players roll.  Player that wins takes their turn.  They
+will play a card, it might be stopped by the other player playing a stop card.
+So cards should be able to be in play and removed from play quickly.  Also it
+should be quick to clear the cards from in play to the discard pile.  Basically
+a card can go from in hand (unknown what the card is when it is in the hand),
+to in play, or into discard, and from discard it can go back to hand or buried
+(into bottom of deck), or placed on top of deck, etc.
+
+The Control UI does not need to be pretty, can be a basic Python UI.  The
+Production UI needs to be polished and configurable, likely HTML5 frame.
+
+Crowd Meter needs to be incrementable.  Title of match will be set at start of
+match.  Stipulations as well.  Stipulations can be free form text for now.
+
+
+Left Side
+---------------------
+Competitor1
+Last Turn Roll Type: <Red Icon POW for Power>
+Last Turn Roll Number: 8
+Cards in Hand: 3
+Cards in Discard Pile: 4
+  - #10: Enjoy Everything  <Yellow Icon STR for Strike>
+  - #4: Apocalypse <Yellow Icon for Strike>
+  - #2: Kick <Purple Icon SUB for Submission>
+  - #3: Punch <Blue Icon GRA for Grapple>
+Cards in Play: 2
+  - #1: Armbar <L icon for Lead><Yellow Icon for Strike>
+  - #7: Lariat <F icon for Follow Up><Purple Icon for Submission>
+Cards in Deck: (30 total - cards in hand - cards in play - cards in discard)
+Turns Won: 6
+Turns Passed: 2
+
+Middle
+---------------------
+Title of Match
+Crowd Meter: 1 
+Stipulations:  New York Rules
+
+Right Side
+---------------------
+Competitor2
+Last Turn Roll Type: <Orage Icon TECH for Technique>
+Last Turn Roll Number: 10
+Cards in Hand: 8
+Cards in Discard Pile:
+  - #22: Muay Thai Strikes<Yellow Icon STR for Strike>
+  - #28: Finish 1
+  - #1: Punch
+  - #4: Kick
+  - <scrollable because there are more than 4>
+Cards in Play:
+  - #1: Armbar <L icon for Lead><Yellow Icon for Strike>
+  - #7: Lariat <FOL icon for Follow Up><Purple Icon for Submission>
+  - #30: Finish <FIN icon for Finish><Purple Icon for Submission>
+Cards in Deck: (30 total - cards in hand - cards in play - cards in discard)
+Turns Won: 10
+Turns Passed: 1
+
