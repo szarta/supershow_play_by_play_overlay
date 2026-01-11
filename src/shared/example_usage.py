@@ -2,8 +2,8 @@
 Example usage of database and sync modules
 Run this to test the infrastructure
 """
+
 import logging
-from pathlib import Path
 
 from .config import Config
 from .database import DatabaseService
@@ -11,8 +11,7 @@ from .sync import SyncService
 
 # Setup logging
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 
 logger = logging.getLogger(__name__)
@@ -26,10 +25,7 @@ def main():
     try:
         config = Config("config.toml")
     except FileNotFoundError:
-        logger.error(
-            "Configuration file not found. "
-            "Copy config.toml.example to config.toml"
-        )
+        logger.error("Configuration file not found. Copy config.toml.example to config.toml")
         return
 
     # Initialize database service
@@ -48,7 +44,7 @@ def main():
         database_service=db_service,
         images_path=config.database.images_path,
         local_manifest_path=config.database.local_manifest_path,
-        timeout=config.sync.sync_timeout
+        timeout=config.sync.sync_timeout,
     )
 
     # Check current database state
@@ -61,13 +57,12 @@ def main():
     logger.info("=" * 60)
 
     def db_progress(message: str, progress: float):
-        logger.info(f"[{progress*100:.0f}%] {message}")
+        logger.info(f"[{progress * 100:.0f}%] {message}")
 
     try:
         current_version = 0  # Start from 0 to force initial sync
         updated, new_version = sync_service.sync_database(
-            current_version=current_version,
-            progress_callback=db_progress
+            current_version=current_version, progress_callback=db_progress
         )
 
         if updated:
@@ -101,8 +96,7 @@ def main():
         logger.info("First 5 main deck cards:")
         for card in main_deck[:5]:
             logger.info(
-                f"  - #{card.deck_card_number}: {card.name} "
-                f"({card.play_order}, {card.atk_type})"
+                f"  - #{card.deck_card_number}: {card.name} ({card.play_order}, {card.atk_type})"
             )
 
     # Search for a card

@@ -1,46 +1,73 @@
 # Quick Resume Guide
 
-## Current State
+## Current State (2026-01-11)
 
-✅ Mosquitto broker is running (PID 23583)
-✅ MQTT module implemented and committed (c49865b)
-⏳ MQTT module NOT YET TESTED (needs paho-mqtt)
+✅ **Phase 1 Controller Complete with Updates!**
+- Mosquitto broker running
+- Database synced (5,562 cards, 1,094 competitors)
+- Controller GUI implemented and working
+- MQTT publishing functional
+- Poetry setup complete with pre-commit hooks
+- ✨ **NEW**: Finish roll tracking
+- ✨ **NEW**: Breakout rolls tracking
+- ✨ **NEW**: Quit button
+- 🗑️ **REMOVED**: Turns won tracking (inferred from recording)
 
 ## Resume Steps
 
-### 1. Set up venv and install dependencies
+### 1. Install dependencies with Poetry
 
 ```bash
 cd ~/data/overlay_app
-python3 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
+poetry install
 ```
 
-### 2. Test MQTT module
+### 2. Run the controller
 
 ```bash
-# Mosquitto is already running, just test
-python -m src.shared.example_mqtt
+poetry run bpp-controller
 ```
 
-Should see:
-- ✓ Topic helpers test pass
-- ✓ Basic pub/sub (2 messages)
-- ✓ Match state publishing (controller → production)
-- ✓ Context manager test
+What you get:
+- 🎮 Match setup UI (title, stipulations, competitors, crowd meter)
+- 👥 Player state controls (turn rolls, hand/deck counts, turns)
+- 📡 Real-time MQTT publishing to `supershow/*` topics
+- 🟢 Connection status indicator
 
-### 3. Next: Build Controller App
+### 3. Test MQTT messages (optional)
 
-After MQTT tests pass, start building `src/controller/main.py`:
-- tkinter UI for match setup
-- Database integration for competitor selection
-- Match state management
-- MQTT publishing
+```bash
+# Terminal 1: Monitor MQTT
+poetry run python test_controller.py
+
+# Terminal 2: Run controller and make changes
+poetry run bpp-controller
+```
+
+### 4. Next: Phase 2 - Card Zone Management
+
+Next steps:
+- In-play card management
+- Discard pile with card list
+- Card search/autocomplete
+- Deck count auto-calculation
 
 ## Quick Commands
 
 ```bash
+# Controller app
+poetry run bpp-controller
+
+# Sync database and images
+poetry run bpp-sync
+
+# Test MQTT connectivity
+poetry run bpp-mqtt-test
+
+# Monitor MQTT messages
+poetry run python test_controller.py
+# Or: mosquitto_sub -h localhost -t 'supershow/#' -v
+
 # Check broker status
 ps aux | grep mosquitto
 
@@ -48,15 +75,11 @@ ps aux | grep mosquitto
 pkill mosquitto
 /usr/sbin/mosquitto -d
 
-# Test broker manually
-mosquitto_sub -h localhost -t test &
-mosquitto_pub -h localhost -t test -m "test"
+# Code quality checks
+poetry run pre-commit run --all-files
 
-# Run database/sync tests
-python -m src.shared.example_usage
-
-# Run MQTT tests (after venv setup)
-python -m src.shared.example_mqtt
+# Run tests
+poetry run pytest
 ```
 
 ## Files to Review

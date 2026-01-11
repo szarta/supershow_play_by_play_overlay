@@ -44,6 +44,7 @@ Both apps sync from get-diced.com:
 ### Prerequisites
 
 - Python 3.10 or higher
+- [Poetry](https://python-poetry.org/docs/#installation) 1.3+ for dependency management
 - MQTT broker (e.g., Mosquitto) running locally or remotely
 
 ### Installation
@@ -51,44 +52,50 @@ Both apps sync from get-diced.com:
 1. Clone the repository:
 ```bash
 git clone <repo-url>
-cd supershow_play_by_play_overlay
+cd overlay_app
 ```
 
-2. Install dependencies:
+2. Install dependencies with Poetry:
 ```bash
-pip install -r requirements.txt
+poetry install
 ```
 
-3. Copy config template and configure:
+3. Install pre-commit hooks (optional but recommended):
+```bash
+poetry run pre-commit install
+```
+
+4. Copy config template and configure:
 ```bash
 cp config.toml.example config.toml
 # Edit config.toml with your MQTT broker settings
 ```
 
-4. Sync card database and images:
+5. Sync card database and images:
 ```bash
-python -m src.controller --sync
+poetry run bpp-sync
 ```
 
 ### Running the Apps
 
 **Controller:**
 ```bash
-python -m src.controller
+poetry run bpp-controller
+# Or: poetry run python -m src.controller.main
 ```
 
-**Production View:**
+**Production View (not yet implemented):**
 ```bash
-python -m src.production_view
+poetry run python -m src.production_view.main
 ```
 
 ## Project Structure
 
 ```
-supershow_play_by_play_overlay/
+overlay_app/
 ├── src/
-│   ├── controller/         # Controller desktop app
-│   ├── production_view/    # Production overlay app
+│   ├── controller/         # Controller desktop app (Phase 1 ✅)
+│   ├── production_view/    # Production overlay app (TODO)
 │   └── shared/            # Shared modules (sync, mqtt, models)
 ├── data/
 │   ├── cards.db           # SQLite card database
@@ -97,7 +104,9 @@ supershow_play_by_play_overlay/
 ├── recordings/            # Match recordings (JSON)
 ├── docs/                  # Additional documentation
 ├── config.toml           # Configuration file
-├── requirements.txt      # Python dependencies
+├── pyproject.toml        # Poetry dependencies & settings
+├── poetry.lock           # Locked dependency versions
+├── .pre-commit-config.yaml  # Pre-commit hooks
 ├── DESIGN.md            # Full design document
 └── README.md            # This file
 ```
@@ -150,24 +159,39 @@ See DESIGN.md for full topic list.
 
 ### Running Tests
 ```bash
-python -m pytest tests/
+poetry run pytest
 ```
 
-### Code Style
+### Code Quality
+This project uses pre-commit hooks with:
+- **Ruff**: Fast Python linter and formatter
+- **Xenon**: Code complexity checker
+- **Poetry check**: Validates pyproject.toml
+
+Run manually:
 ```bash
-black src/
-flake8 src/
+poetry run pre-commit run --all-files
 ```
+
+Or let it run automatically on every commit (after `poetry run pre-commit install`).
 
 ## Roadmap
 
-- [x] Phase 1: Core infrastructure & sync
-- [ ] Phase 2: Card management in controller
-- [ ] Phase 3: Production view interactivity
-- [ ] Phase 4: Match recording
-- [ ] Phase 5: Polish & features
-- [ ] Phase 6: Sync & update management
-- [ ] Phase 7: Replay viewer (future)
+- [x] **Phase 1**: Core infrastructure & controller UI (✅ Complete)
+  - Database sync, MQTT client, match setup
+  - Player state management (turn rolls, hand/deck, turns)
+  - Real-time MQTT publishing
+- [ ] **Phase 2**: Card management in controller
+  - In-play cards, discard pile
+  - Card search/autocomplete
+- [ ] **Phase 3**: Production view overlay
+  - Minimal bottom overlay
+  - Expandable player sections
+  - Card previews
+- [ ] **Phase 4**: Match recording
+- [ ] **Phase 5**: Polish & features
+- [ ] **Phase 6**: Sync & update management
+- [ ] **Phase 7**: Replay viewer (future)
 
 ## Contributing
 

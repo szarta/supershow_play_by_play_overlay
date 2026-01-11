@@ -2,11 +2,12 @@
 MQTT client module for BPP Supershow Overlay
 Handles MQTT connection, publishing, and subscribing
 """
+
 import json
 import logging
 import time
-from typing import Optional, Callable, Dict, Any
-from dataclasses import dataclass
+from collections.abc import Callable
+from typing import Any
 
 import paho.mqtt.client as mqtt
 
@@ -14,6 +15,7 @@ logger = logging.getLogger(__name__)
 
 
 # ==================== Topic Constants ====================
+
 
 class Topics:
     """MQTT topic constants"""
@@ -32,8 +34,9 @@ class Topics:
     PLAYER_DISCARD = "supershow/player/{player_id}/discard"
     PLAYER_IN_PLAY = "supershow/player/{player_id}/in_play"
     PLAYER_TURN_ROLL = "supershow/player/{player_id}/turn_roll"
-    PLAYER_TURNS_WON = "supershow/player/{player_id}/turns_won"
     PLAYER_TURNS_PASSED = "supershow/player/{player_id}/turns_passed"
+    PLAYER_FINISH_ROLL = "supershow/player/{player_id}/finish_roll"
+    PLAYER_BREAKOUT_ROLLS = "supershow/player/{player_id}/breakout_rolls"
 
     # Event topics (for match recording)
     EVENT_MATCH_START = "supershow/events/match_start"
@@ -70,6 +73,7 @@ class Topics:
 
 # ==================== MQTT Client ====================
 
+
 class MQTTClient:
     """MQTT client wrapper with reconnection logic"""
 
@@ -78,11 +82,11 @@ class MQTTClient:
         client_id: str,
         broker_host: str,
         broker_port: int,
-        username: Optional[str] = None,
-        password: Optional[str] = None,
+        username: str | None = None,
+        password: str | None = None,
         keepalive: int = 60,
         reconnect_delay_min: int = 1,
-        reconnect_delay_max: int = 60
+        reconnect_delay_max: int = 60,
     ):
         """
         Initialize MQTT client
@@ -118,12 +122,12 @@ class MQTTClient:
         self.reconnect_delay = reconnect_delay_min
 
         # Callback handlers
-        self.on_connect_callback: Optional[Callable[[bool], None]] = None
-        self.on_disconnect_callback: Optional[Callable[[], None]] = None
-        self.on_message_callback: Optional[Callable[[str, Any], None]] = None
+        self.on_connect_callback: Callable[[bool], None] | None = None
+        self.on_disconnect_callback: Callable[[], None] | None = None
+        self.on_message_callback: Callable[[str, Any], None] | None = None
 
         # Message handlers by topic
-        self.topic_handlers: Dict[str, Callable[[Any], None]] = {}
+        self.topic_handlers: dict[str, Callable[[Any], None]] = {}
 
         # Set up internal callbacks
         self.client.on_connect = self._on_connect
@@ -140,14 +144,8 @@ class MQTTClient:
             True if connection initiated successfully
         """
         try:
-            logger.info(
-                f"Connecting to MQTT broker: {self.broker_host}:{self.broker_port}"
-            )
-            self.client.connect(
-                self.broker_host,
-                self.broker_port,
-                self.keepalive
-            )
+            logger.info(f"Connecting to MQTT broker: {self.broker_host}:{self.broker_port}")
+            self.client.connect(self.broker_host, self.broker_port, self.keepalive)
             self.client.loop_start()
             return True
         except Exception as e:
@@ -161,13 +159,7 @@ class MQTTClient:
         self.client.disconnect()
         self.connected = False
 
-    def publish(
-        self,
-        topic: str,
-        payload: Any,
-        qos: int = 0,
-        retain: bool = False
-    ) -> bool:
+    def publish(self, topic: str, payload: Any, qos: int = 0, retain: bool = False) -> bool:
         """
         Publish message to topic
 
@@ -205,10 +197,7 @@ class MQTTClient:
             return False
 
     def subscribe(
-        self,
-        topic: str,
-        qos: int = 0,
-        handler: Optional[Callable[[Any], None]] = None
+        self, topic: str, qos: int = 0, handler: Callable[[Any], None] | None = None
     ) -> bool:
         """
         Subscribe to topic
@@ -285,10 +274,7 @@ class MQTTClient:
         """
         self.on_disconnect_callback = callback
 
-    def set_on_message_callback(
-        self,
-        callback: Callable[[str, Any], None]
-    ) -> None:
+    def set_on_message_callback(self, callback: Callable[[str, Any], None]) -> None:
         """
         Set global message callback
 
@@ -300,11 +286,7 @@ class MQTTClient:
     # ==================== Internal Callbacks ====================
 
     def _on_connect(
-        self,
-        client: mqtt.Client,
-        userdata: Any,
-        flags: Dict[str, Any],
-        rc: int
+        self, client: mqtt.Client, userdata: Any, flags: dict[str, Any], rc: int
     ) -> None:
         """
         Internal connection callback
@@ -329,12 +311,7 @@ class MQTTClient:
             if self.on_connect_callback:
                 self.on_connect_callback(False)
 
-    def _on_disconnect(
-        self,
-        client: mqtt.Client,
-        userdata: Any,
-        rc: int
-    ) -> None:
+    def _on_disconnect(self, client: mqtt.Client, userdata: Any, rc: int) -> None:
         """
         Internal disconnection callback
 
@@ -354,10 +331,7 @@ class MQTTClient:
             logger.info(f"Reconnecting in {self.reconnect_delay} seconds...")
             time.sleep(self.reconnect_delay)
 
-            self.reconnect_delay = min(
-                self.reconnect_delay * 2,
-                self.reconnect_delay_max
-            )
+            self.reconnect_delay = min(self.reconnect_delay * 2, self.reconnect_delay_max)
 
             try:
                 self.client.reconnect()
@@ -367,12 +341,7 @@ class MQTTClient:
         if self.on_disconnect_callback:
             self.on_disconnect_callback()
 
-    def _on_message(
-        self,
-        client: mqtt.Client,
-        userdata: Any,
-        message: mqtt.MQTTMessage
-    ) -> None:
+    def _on_message(self, client: mqtt.Client, userdata: Any, message: mqtt.MQTTMessage) -> None:
         """
         Internal message callback
 
@@ -382,7 +351,7 @@ class MQTTClient:
             message: MQTT message
         """
         topic = message.topic
-        payload_str = message.payload.decode('utf-8')
+        payload_str = message.payload.decode("utf-8")
 
         # Try to parse as JSON
         try:
@@ -418,13 +387,14 @@ class MQTTClient:
 
 # ==================== Helper Functions ====================
 
+
 def create_controller_client(
     broker_host: str,
     broker_port: int,
     client_id: str = "supershow_controller",
-    username: Optional[str] = None,
-    password: Optional[str] = None,
-    **kwargs
+    username: str | None = None,
+    password: str | None = None,
+    **kwargs,
 ) -> MQTTClient:
     """
     Create MQTT client for controller app
@@ -446,7 +416,7 @@ def create_controller_client(
         broker_port=broker_port,
         username=username,
         password=password,
-        **kwargs
+        **kwargs,
     )
 
 
@@ -454,9 +424,9 @@ def create_production_client(
     broker_host: str,
     broker_port: int,
     client_id: str = "supershow_production",
-    username: Optional[str] = None,
-    password: Optional[str] = None,
-    **kwargs
+    username: str | None = None,
+    password: str | None = None,
+    **kwargs,
 ) -> MQTTClient:
     """
     Create MQTT client for production view app
@@ -478,5 +448,5 @@ def create_production_client(
         broker_port=broker_port,
         username=username,
         password=password,
-        **kwargs
+        **kwargs,
     )

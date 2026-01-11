@@ -6,9 +6,9 @@ NOTE: This requires a running MQTT broker.
 To start a local broker with Docker:
   docker run -it -p 1883:1883 eclipse-mosquitto:2
 """
+
 import logging
 import time
-import json
 from typing import Any
 
 from .config import Config
@@ -16,8 +16,7 @@ from .mqtt_client import MQTTClient, Topics
 
 # Setup logging
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 
 logger = logging.getLogger(__name__)
@@ -33,10 +32,7 @@ def test_basic_pubsub():
     try:
         config = Config("config.toml")
     except FileNotFoundError:
-        logger.error(
-            "Configuration file not found. "
-            "Copy config.toml.example to config.toml"
-        )
+        logger.error("Configuration file not found. Copy config.toml.example to config.toml")
         return
 
     # Create client
@@ -48,7 +44,7 @@ def test_basic_pubsub():
         password=config.mqtt.password if config.mqtt.password else None,
         keepalive=config.mqtt.keepalive,
         reconnect_delay_min=config.mqtt.reconnect_delay_min,
-        reconnect_delay_max=config.mqtt.reconnect_delay_max
+        reconnect_delay_max=config.mqtt.reconnect_delay_max,
     )
 
     # Set up connection callback
@@ -78,10 +74,7 @@ def test_basic_pubsub():
 
     if not client.connected:
         logger.error("Failed to connect to broker. Is it running?")
-        logger.info(
-            "To start a local broker: "
-            "docker run -it -p 1883:1883 eclipse-mosquitto:2"
-        )
+        logger.info("To start a local broker: docker run -it -p 1883:1883 eclipse-mosquitto:2")
         return
 
     # Subscribe to test topic
@@ -123,7 +116,7 @@ def test_match_state_publishing():
         broker_host=config.mqtt.broker_host,
         broker_port=config.mqtt.broker_port,
         username=config.mqtt.username if config.mqtt.username else None,
-        password=config.mqtt.password if config.mqtt.password else None
+        password=config.mqtt.password if config.mqtt.password else None,
     )
 
     # Create production client
@@ -132,7 +125,7 @@ def test_match_state_publishing():
         broker_host=config.mqtt.broker_host,
         broker_port=config.mqtt.broker_port,
         username=config.mqtt.username if config.mqtt.username else None,
-        password=config.mqtt.password if config.mqtt.password else None
+        password=config.mqtt.password if config.mqtt.password else None,
     )
 
     # Set up production client to receive updates
@@ -172,39 +165,21 @@ def test_match_state_publishing():
         "title": "Championship Match",
         "stipulations": "New York Rules",
         "player1_competitor": "comp-uuid-1",
-        "player2_competitor": "comp-uuid-2"
+        "player2_competitor": "comp-uuid-2",
     }
     controller.publish(Topics.MATCH_INIT, match_init, qos=1, retain=True)
 
     # Controller publishes player state updates
     logger.info("Controller publishing player state...")
     controller.publish(
-        Topics.player_topic(Topics.PLAYER_COMPETITOR, 1),
-        "competitor-uuid-123",
-        qos=1,
-        retain=True
+        Topics.player_topic(Topics.PLAYER_COMPETITOR, 1), "competitor-uuid-123", qos=1, retain=True
     )
-    controller.publish(
-        Topics.player_topic(Topics.PLAYER_HAND_COUNT, 1),
-        5,
-        qos=1,
-        retain=True
-    )
-    controller.publish(
-        Topics.player_topic(Topics.PLAYER_DECK_COUNT, 1),
-        25,
-        qos=1,
-        retain=True
-    )
+    controller.publish(Topics.player_topic(Topics.PLAYER_HAND_COUNT, 1), 5, qos=1, retain=True)
+    controller.publish(Topics.player_topic(Topics.PLAYER_DECK_COUNT, 1), 25, qos=1, retain=True)
 
     # Controller publishes turn roll event
     logger.info("Controller publishing turn roll event...")
-    turn_roll = {
-        "player_id": 1,
-        "roll_type": "Power",
-        "value": 8,
-        "timestamp": int(time.time())
-    }
+    turn_roll = {"player_id": 1, "roll_type": "Power", "value": 8, "timestamp": int(time.time())}
     controller.publish(Topics.EVENT_TURN_ROLL, turn_roll, qos=1)
 
     # Wait for messages to be received
@@ -274,7 +249,7 @@ def test_context_manager():
     with MQTTClient(
         client_id="context_test",
         broker_host=config.mqtt.broker_host,
-        broker_port=config.mqtt.broker_port
+        broker_port=config.mqtt.broker_port,
     ) as client:
         time.sleep(2)
 
@@ -305,7 +280,7 @@ def main():
     logger.info("")
 
     response = input("Do you have a broker running? (y/n): ")
-    if response.lower() != 'y':
+    if response.lower() != "y":
         logger.info("Skipping broker tests")
         return
 

@@ -2,13 +2,13 @@
 Database module for BPP Supershow Overlay
 Handles SQLite connection and card queries
 """
-import sqlite3
-import logging
-from pathlib import Path
-from typing import Optional, List, Tuple
-from contextlib import contextmanager
 
-from .models import Card, CardType, AttackType, PlayOrder
+import logging
+import sqlite3
+from contextlib import contextmanager
+from pathlib import Path
+
+from .models import AttackType, Card, CardType, PlayOrder
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +25,7 @@ class DatabaseService:
         """
         self.db_path = Path(db_path)
         self._ensure_directory()
-        self._connection: Optional[sqlite3.Connection] = None
+        self._connection: sqlite3.Connection | None = None
 
     def _ensure_directory(self) -> None:
         """Ensure database directory exists"""
@@ -34,10 +34,7 @@ class DatabaseService:
     def connect(self) -> None:
         """Open database connection"""
         if self._connection is None:
-            self._connection = sqlite3.connect(
-                str(self.db_path),
-                check_same_thread=False
-            )
+            self._connection = sqlite3.connect(str(self.db_path), check_same_thread=False)
             self._connection.row_factory = sqlite3.Row
             logger.info(f"Connected to database: {self.db_path}")
             self._init_tables()
@@ -142,7 +139,7 @@ class DatabaseService:
         cursor.execute("SELECT COUNT(*) FROM cards")
         return cursor.fetchone()[0]
 
-    def get_card_by_uuid(self, uuid: str) -> Optional[Card]:
+    def get_card_by_uuid(self, uuid: str) -> Card | None:
         """
         Get card by UUID
 
@@ -163,7 +160,7 @@ class DatabaseService:
             return self._row_to_card(row)
         return None
 
-    def get_card_by_name(self, name: str, exact: bool = True) -> Optional[Card]:
+    def get_card_by_name(self, name: str, exact: bool = True) -> Card | None:
         """
         Get card by name
 
@@ -182,10 +179,7 @@ class DatabaseService:
         if exact:
             cursor.execute("SELECT * FROM cards WHERE name = ?", (name,))
         else:
-            cursor.execute(
-                "SELECT * FROM cards WHERE name LIKE ? COLLATE NOCASE",
-                (f"%{name}%",)
-            )
+            cursor.execute("SELECT * FROM cards WHERE name LIKE ? COLLATE NOCASE", (f"%{name}%",))
 
         row = cursor.fetchone()
 
@@ -195,13 +189,13 @@ class DatabaseService:
 
     def search_cards(
         self,
-        query: Optional[str] = None,
-        card_type: Optional[str] = None,
-        atk_type: Optional[str] = None,
-        play_order: Optional[str] = None,
-        division: Optional[str] = None,
-        limit: int = 100
-    ) -> List[Card]:
+        query: str | None = None,
+        card_type: str | None = None,
+        atk_type: str | None = None,
+        play_order: str | None = None,
+        division: str | None = None,
+        limit: int = 100,
+    ) -> list[Card]:
         """
         Search cards with filters
 
@@ -251,11 +245,7 @@ class DatabaseService:
 
         return [self._row_to_card(row) for row in cursor.fetchall()]
 
-    def get_competitors(
-        self,
-        division: Optional[str] = None,
-        limit: Optional[int] = None
-    ) -> List[Card]:
+    def get_competitors(self, division: str | None = None, limit: int | None = None) -> list[Card]:
         """
         Get all competitor cards
 
@@ -280,17 +270,14 @@ class DatabaseService:
                 sql += f" LIMIT {limit}"
             cursor.execute(sql, (division,))
         else:
-            sql = (
-                "SELECT * FROM cards WHERE card_type LIKE '%Competitor%' "
-                "ORDER BY name"
-            )
+            sql = "SELECT * FROM cards WHERE card_type LIKE '%Competitor%' ORDER BY name"
             if limit:
                 sql += f" LIMIT {limit}"
             cursor.execute(sql)
 
         return [self._row_to_card(row) for row in cursor.fetchall()]
 
-    def get_main_deck_cards(self) -> List[Card]:
+    def get_main_deck_cards(self) -> list[Card]:
         """
         Get all main deck cards
 
@@ -302,13 +289,12 @@ class DatabaseService:
 
         cursor = self._connection.cursor()
         cursor.execute(
-            "SELECT * FROM cards WHERE card_type = 'MainDeckCard' "
-            "ORDER BY deck_card_number"
+            "SELECT * FROM cards WHERE card_type = 'MainDeckCard' ORDER BY deck_card_number"
         )
 
         return [self._row_to_card(row) for row in cursor.fetchall()]
 
-    def get_related_finishes(self, card_uuid: str) -> List[str]:
+    def get_related_finishes(self, card_uuid: str) -> list[str]:
         """
         Get related finish UUIDs for a card
 
@@ -323,8 +309,7 @@ class DatabaseService:
 
         cursor = self._connection.cursor()
         cursor.execute(
-            "SELECT finish_uuid FROM card_related_finishes WHERE card_uuid = ?",
-            (card_uuid,)
+            "SELECT finish_uuid FROM card_related_finishes WHERE card_uuid = ?", (card_uuid,)
         )
 
         return [row[0] for row in cursor.fetchall()]
@@ -341,7 +326,7 @@ class DatabaseService:
             cursor.execute("DELETE FROM cards")
             logger.info("Cleared all card data")
 
-    def replace_from_temp_db(self, temp_db_path: str) -> Tuple[int, int, int]:
+    def replace_from_temp_db(self, temp_db_path: str) -> tuple[int, int, int]:
         """
         Replace card data from temporary database
 
@@ -376,15 +361,13 @@ class DatabaseService:
                 # Copy related finishes
                 logger.info("Copying related finishes...")
                 cursor.execute(
-                    "INSERT INTO card_related_finishes "
-                    "SELECT * FROM temp_db.card_related_finishes"
+                    "INSERT INTO card_related_finishes SELECT * FROM temp_db.card_related_finishes"
                 )
 
                 # Copy related cards
                 logger.info("Copying related cards...")
                 cursor.execute(
-                    "INSERT INTO card_related_cards "
-                    "SELECT * FROM temp_db.card_related_cards"
+                    "INSERT INTO card_related_cards SELECT * FROM temp_db.card_related_cards"
                 )
 
             # Transaction committed successfully, now detach
@@ -396,9 +379,7 @@ class DatabaseService:
             finishes_count = cursor.execute(
                 "SELECT COUNT(*) FROM card_related_finishes"
             ).fetchone()[0]
-            related_count = cursor.execute(
-                "SELECT COUNT(*) FROM card_related_cards"
-            ).fetchone()[0]
+            related_count = cursor.execute("SELECT COUNT(*) FROM card_related_cards").fetchone()[0]
 
             logger.info(
                 f"Database sync complete: {cards_count} cards, "
@@ -429,52 +410,52 @@ class DatabaseService:
         """
         # Parse tags from comma-separated string
         tags = []
-        if row['tags']:
-            tags = [t.strip() for t in row['tags'].split(',')]
+        if row["tags"]:
+            tags = [t.strip() for t in row["tags"].split(",")]
 
         # Parse enums
         card_type = None
-        if row['card_type']:
+        if row["card_type"]:
             try:
-                card_type = CardType(row['card_type'])
+                card_type = CardType(row["card_type"])
             except ValueError:
-                card_type = row['card_type']  # Store as string if not in enum
+                card_type = row["card_type"]  # Store as string if not in enum
 
         atk_type = None
-        if row['atk_type']:
+        if row["atk_type"]:
             try:
-                atk_type = AttackType(row['atk_type'])
+                atk_type = AttackType(row["atk_type"])
             except ValueError:
                 pass
 
         play_order = None
-        if row['play_order']:
+        if row["play_order"]:
             try:
-                play_order = PlayOrder(row['play_order'])
+                play_order = PlayOrder(row["play_order"])
             except ValueError:
                 pass
 
         return Card(
-            db_uuid=row['db_uuid'],
-            name=row['name'],
+            db_uuid=row["db_uuid"],
+            name=row["name"],
             card_type=card_type,
-            rules_text=row['rules_text'],
-            errata_text=row['errata_text'],
-            is_banned=bool(row['is_banned']),
-            release_set=row['release_set'],
-            srg_url=row['srg_url'],
-            srgpc_url=row['srgpc_url'],
-            comments=row['comments'],
+            rules_text=row["rules_text"],
+            errata_text=row["errata_text"],
+            is_banned=bool(row["is_banned"]),
+            release_set=row["release_set"],
+            srg_url=row["srg_url"],
+            srgpc_url=row["srgpc_url"],
+            comments=row["comments"],
             tags=tags,
-            power=row['power'],
-            agility=row['agility'],
-            strike=row['strike'],
-            submission=row['submission'],
-            grapple=row['grapple'],
-            technique=row['technique'],
-            division=row['division'],
-            gender=row['gender'],
-            deck_card_number=row['deck_card_number'],
+            power=row["power"],
+            agility=row["agility"],
+            strike=row["strike"],
+            submission=row["submission"],
+            grapple=row["grapple"],
+            technique=row["technique"],
+            division=row["division"],
+            gender=row["gender"],
+            deck_card_number=row["deck_card_number"],
             atk_type=atk_type,
             play_order=play_order,
         )

@@ -2,24 +2,24 @@
 Sync module for BPP Supershow Overlay
 Handles database and image syncing from get-diced.com API
 """
+
+import hashlib
 import json
 import logging
-import hashlib
-import time
+from collections.abc import Callable
 from pathlib import Path
-from typing import Optional, Callable, Tuple, Dict
-from dataclasses import dataclass, asdict
 
 import requests
 
-from .models import CardsManifest, ImageManifest, ImageInfo
 from .database import DatabaseService
+from .models import CardsManifest, ImageInfo, ImageManifest
 
 logger = logging.getLogger(__name__)
 
 
 class SyncError(Exception):
     """Base exception for sync errors"""
+
     pass
 
 
@@ -36,7 +36,7 @@ class SyncService:
         database_service: DatabaseService,
         images_path: str,
         local_manifest_path: str,
-        timeout: int = 300
+        timeout: int = 300,
     ):
         """
         Initialize sync service
@@ -52,7 +52,7 @@ class SyncService:
             local_manifest_path: Path to local manifest file
             timeout: Request timeout in seconds
         """
-        self.api_base_url = api_base_url.rstrip('/')
+        self.api_base_url = api_base_url.rstrip("/")
         self.cards_manifest_url = cards_manifest_url
         self.cards_database_url = cards_database_url
         self.images_manifest_url = images_manifest_url
@@ -66,9 +66,7 @@ class SyncService:
         self.local_manifest_path.parent.mkdir(parents=True, exist_ok=True)
 
         self.session = requests.Session()
-        self.session.headers.update({
-            'User-Agent': 'BPP-Supershow-Overlay/0.1.0'
-        })
+        self.session.headers.update({"User-Agent": "BPP-Supershow-Overlay/0.1.0"})
 
     # ==================== Database Sync ====================
 
@@ -91,17 +89,16 @@ class SyncService:
             data = response.json()
 
             return CardsManifest(
-                version=data['version'],
-                filename=data['filename'],
-                size_bytes=data['size_bytes'],
-                generated=data['generated']
+                version=data["version"],
+                filename=data["filename"],
+                size_bytes=data["size_bytes"],
+                generated=data["generated"],
             )
         except requests.RequestException as e:
-            raise SyncError(f"Failed to fetch cards manifest: {e}")
+            raise SyncError(f"Failed to fetch cards manifest: {e}") from e
 
     def download_cards_database(
-        self,
-        progress_callback: Optional[Callable[[int, int], None]] = None
+        self, progress_callback: Callable[[int, int], None] | None = None
     ) -> bytes:
         """
         Download cards database from API
@@ -122,7 +119,7 @@ class SyncService:
             response = self.session.get(url, timeout=self.timeout, stream=True)
             response.raise_for_status()
 
-            total_size = int(response.headers.get('content-length', 0))
+            total_size = int(response.headers.get("content-length", 0))
             downloaded = 0
             chunks = []
 
@@ -134,16 +131,14 @@ class SyncService:
                     if progress_callback and total_size:
                         progress_callback(downloaded, total_size)
 
-            return b''.join(chunks)
+            return b"".join(chunks)
 
         except requests.RequestException as e:
-            raise SyncError(f"Failed to download database: {e}")
+            raise SyncError(f"Failed to download database: {e}") from e
 
     def sync_database(
-        self,
-        current_version: int,
-        progress_callback: Optional[Callable[[str, float], None]] = None
-    ) -> Tuple[bool, int]:
+        self, current_version: int, progress_callback: Callable[[str, float], None] | None = None
+    ) -> tuple[bool, int]:
         """
         Sync card database from server
 
@@ -163,8 +158,7 @@ class SyncService:
 
         manifest = self.get_cards_manifest()
         logger.info(
-            f"Database manifest: v{manifest.version} "
-            f"({manifest.size_bytes / 1024 / 1024:.1f} MB)"
+            f"Database manifest: v{manifest.version} ({manifest.size_bytes / 1024 / 1024:.1f} MB)"
         )
 
         # Check if update needed
@@ -176,18 +170,14 @@ class SyncService:
 
         # Step 2: Download database
         if progress_callback:
-            progress_callback(
-                f"Downloading database v{manifest.version}...",
-                0.3
-            )
+            progress_callback(f"Downloading database v{manifest.version}...", 0.3)
 
         def download_progress(downloaded: int, total: int):
             if progress_callback:
                 progress = 0.3 + (downloaded / total * 0.4)  # 0.3 to 0.7
                 progress_callback(
-                    f"Downloading: {downloaded / 1024 / 1024:.1f} / "
-                    f"{total / 1024 / 1024:.1f} MB",
-                    progress
+                    f"Downloading: {downloaded / 1024 / 1024:.1f} / {total / 1024 / 1024:.1f} MB",
+                    progress,
                 )
 
         db_data = self.download_cards_database(download_progress)
@@ -207,8 +197,7 @@ class SyncService:
         try:
             counts = self.database_service.replace_from_temp_db(str(temp_path))
             logger.info(
-                f"Database updated: {counts[0]} cards, "
-                f"{counts[1]} finishes, {counts[2]} related"
+                f"Database updated: {counts[0]} cards, {counts[1]} finishes, {counts[2]} related"
             )
         finally:
             # Clean up temp file
@@ -242,22 +231,19 @@ class SyncService:
             data = response.json()
 
             images = {}
-            for uuid, info in data.get('images', {}).items():
-                images[uuid] = ImageInfo(
-                    hash=info['hash'],
-                    path=info['path']
-                )
+            for uuid, info in data.get("images", {}).items():
+                images[uuid] = ImageInfo(hash=info["hash"], path=info["path"])
 
             return ImageManifest(
-                version=data['version'],
-                generated=data['generated'],
-                image_count=data['image_count'],
-                images=images
+                version=data["version"],
+                generated=data["generated"],
+                image_count=data["image_count"],
+                images=images,
             )
         except requests.RequestException as e:
-            raise SyncError(f"Failed to fetch images manifest: {e}")
+            raise SyncError(f"Failed to fetch images manifest: {e}") from e
 
-    def load_local_manifest(self) -> Optional[ImageManifest]:
+    def load_local_manifest(self) -> ImageManifest | None:
         """
         Load local images manifest
 
@@ -269,21 +255,18 @@ class SyncService:
             return None
 
         try:
-            with open(self.local_manifest_path, 'r') as f:
+            with open(self.local_manifest_path) as f:
                 data = json.load(f)
 
             images = {}
-            for uuid, info in data.get('images', {}).items():
-                images[uuid] = ImageInfo(
-                    hash=info['hash'],
-                    path=info['path']
-                )
+            for uuid, info in data.get("images", {}).items():
+                images[uuid] = ImageInfo(hash=info["hash"], path=info["path"])
 
             manifest = ImageManifest(
-                version=data['version'],
-                generated=data['generated'],
-                image_count=data['image_count'],
-                images=images
+                version=data["version"],
+                generated=data["generated"],
+                image_count=data["image_count"],
+                images=images,
             )
 
             logger.info(f"Loaded local manifest: {manifest.image_count} images")
@@ -301,21 +284,21 @@ class SyncService:
             manifest: ImageManifest to save
         """
         data = {
-            'version': manifest.version,
-            'generated': manifest.generated,
-            'image_count': manifest.image_count,
-            'images': {
-                uuid: {'hash': info.hash, 'path': info.path}
+            "version": manifest.version,
+            "generated": manifest.generated,
+            "image_count": manifest.image_count,
+            "images": {
+                uuid: {"hash": info.hash, "path": info.path}
                 for uuid, info in manifest.images.items()
-            }
+            },
         }
 
-        with open(self.local_manifest_path, 'w') as f:
+        with open(self.local_manifest_path, "w") as f:
             json.dump(data, f, indent=2)
 
         logger.info(f"Saved local manifest: {manifest.image_count} images")
 
-    def get_local_image_hashes(self) -> Dict[str, str]:
+    def get_local_image_hashes(self) -> dict[str, str]:
         """
         Get local image hashes from manifest
 
@@ -328,12 +311,7 @@ class SyncService:
 
         return {uuid: info.hash for uuid, info in manifest.images.items()}
 
-    def download_image(
-        self,
-        uuid: str,
-        path: str,
-        verify_hash: Optional[str] = None
-    ) -> Path:
+    def download_image(self, uuid: str, path: str, verify_hash: str | None = None) -> Path:
         """
         Download a single image
 
@@ -361,8 +339,7 @@ class SyncService:
                 actual_hash = hashlib.sha256(image_data).hexdigest()
                 if actual_hash != verify_hash:
                     raise SyncError(
-                        f"Image hash mismatch for {uuid}: "
-                        f"expected {verify_hash}, got {actual_hash}"
+                        f"Image hash mismatch for {uuid}: expected {verify_hash}, got {actual_hash}"
                     )
 
             # Save to local path: images/{first_2_chars}/{uuid}.webp
@@ -377,12 +354,11 @@ class SyncService:
             return img_path
 
         except requests.RequestException as e:
-            raise SyncError(f"Failed to download image {uuid}: {e}")
+            raise SyncError(f"Failed to download image {uuid}: {e}") from e
 
     def sync_images(
-        self,
-        progress_callback: Optional[Callable[[int, int], None]] = None
-    ) -> Tuple[int, int]:
+        self, progress_callback: Callable[[int, int], None] | None = None
+    ) -> tuple[int, int]:
         """
         Sync images from server
 
@@ -424,11 +400,7 @@ class SyncService:
 
         for uuid, server_info in to_sync:
             try:
-                self.download_image(
-                    uuid,
-                    server_info.path,
-                    verify_hash=server_info.hash
-                )
+                self.download_image(uuid, server_info.path, verify_hash=server_info.hash)
                 synced_images[uuid] = server_info
                 downloaded += 1
 
@@ -453,7 +425,7 @@ class SyncService:
                     version=server_manifest.version,
                     generated=server_manifest.generated,
                     image_count=len(synced_images),
-                    images=synced_images
+                    images=synced_images,
                 )
 
             self.save_local_manifest(local_manifest)
@@ -461,7 +433,7 @@ class SyncService:
         logger.info(f"Image sync complete: {downloaded}/{total} downloaded")
         return (downloaded, total)
 
-    def get_image_path(self, uuid: str) -> Optional[Path]:
+    def get_image_path(self, uuid: str) -> Path | None:
         """
         Get local path to image file
 
@@ -478,7 +450,7 @@ class SyncService:
             return img_path
         return None
 
-    def get_sync_status(self) -> Tuple[int, int]:
+    def get_sync_status(self) -> tuple[int, int]:
         """
         Get image sync status without downloading
 
