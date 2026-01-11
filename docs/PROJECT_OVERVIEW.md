@@ -73,20 +73,20 @@ supershow_play_by_play_overlay/
 - Type definitions and enums
 - Serialization/deserialization helpers
 
-### shared/sync.py (to be created)
+### shared/sync.py
 - API client for get-diced.com
 - Database manifest checking and download
 - Image manifest checking and download
 - Hash verification for images
 
-### shared/mqtt_client.py (to be created)
+### shared/mqtt_client.py
 - MQTT connection wrapper
 - Publish/subscribe helpers
 - Topic constants
 - Reconnection logic
 
-### shared/database.py (to be created)
-- SQLite connection pool
+### shared/database.py
+- SQLite connection management
 - Card CRUD operations
 - Transaction management
 - Query builders
@@ -145,10 +145,11 @@ flake8 src/
 ✅ README and documentation
 ✅ Database module (database.py) - Complete
 ✅ Sync module (sync.py) - Complete
-✅ Example usage script
-⏳ MQTT client (next)
-⏳ Controller app
+✅ MQTT client (mqtt_client.py) - Complete
+✅ Example usage scripts
+⏳ Controller app (next)
 ⏳ Production view app
+⏳ Match recorder
 
 ### Completed Modules
 
@@ -179,6 +180,16 @@ flake8 src/
 - Card, PlayerState, MatchState models
 - Manifest models for sync
 
+**mqtt_client.py** (485 lines)
+- MQTT client wrapper with paho-mqtt
+- Connection management with auto-reconnection
+- Publish/subscribe methods with QoS support
+- Topic constants for all supershow/* topics
+- Callback system for connection, disconnection, and messages
+- Exponential backoff for reconnection
+- Context manager support
+- Helper functions for controller and production clients
+
 ### Testing
 
 Run the example script to test database and sync:
@@ -187,3 +198,12 @@ python -m src.shared.example_usage
 ```
 
 See `docs/TESTING_SYNC.md` for detailed testing instructions.
+
+Run the MQTT example to test MQTT connectivity (requires running broker):
+```bash
+# Start a local MQTT broker
+docker run -it -p 1883:1883 eclipse-mosquitto:2
+
+# In another terminal
+python -m src.shared.example_mqtt
+```
