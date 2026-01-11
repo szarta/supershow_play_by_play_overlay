@@ -2,16 +2,16 @@
 
 ## Current State (2026-01-11)
 
-✅ **Phase 1 Controller Complete with Updates!**
+✅ **Phase 3 Production View Complete!**
 - Mosquitto broker running
 - Database synced (5,562 cards, 1,094 competitors)
 - Controller GUI implemented and working
-- MQTT publishing functional
+- ✨ **NEW**: Production overlay view implemented
+- ✨ **NEW**: Frameless, transparent overlay window
+- ✨ **NEW**: Collapsed (150px) and expanded (500px) views
+- ✨ **NEW**: Real-time MQTT subscription
+- ✨ **NEW**: Auto-collapse timer and window dragging
 - Poetry setup complete with pre-commit hooks
-- ✨ **NEW**: Finish roll tracking
-- ✨ **NEW**: Breakout rolls tracking
-- ✨ **NEW**: Quit button
-- 🗑️ **REMOVED**: Turns won tracking (inferred from recording)
 
 ## Resume Steps
 
@@ -22,7 +22,22 @@ cd ~/data/overlay_app
 poetry install
 ```
 
-### 2. Run the controller
+### 2. Run the production view overlay
+
+```bash
+poetry run bpp-production
+```
+
+What you get:
+- 🎬 Frameless overlay window at bottom of screen
+- 📊 Minimal collapsed view (1920x150px)
+- 📈 Detailed expanded view (1920x500px)
+- 🖼️ Competitor images with caching
+- 📡 Real-time MQTT subscription to all `supershow/*` topics
+- ⏱️ Auto-collapse after 10 seconds
+- 🖱️ Click-and-drag to reposition
+
+### 3. Run the controller (in another terminal)
 
 ```bash
 poetry run bpp-controller
@@ -30,9 +45,10 @@ poetry run bpp-controller
 
 What you get:
 - 🎮 Match setup UI (title, stipulations, competitors, crowd meter)
-- 👥 Player state controls (turn rolls, hand/deck counts, turns)
+- 👥 Player state controls (turn rolls, hand/deck counts, finish/breakout rolls)
 - 📡 Real-time MQTT publishing to `supershow/*` topics
 - 🟢 Connection status indicator
+- 🚪 Quit button
 
 ### 3. Test MQTT messages (optional)
 
@@ -44,17 +60,28 @@ poetry run python test_controller.py
 poetry run bpp-controller
 ```
 
-### 4. Next: Phase 2 - Card Zone Management
+### 4. Test end-to-end
 
-Next steps:
+With both controller and production view running:
+1. Create a match in the controller
+2. Watch the production view update in real-time
+3. Click player sections to expand/collapse
+4. Drag the overlay to reposition
+
+### 5. Next: Phase 2 - Card Zone Management
+
+**Now that Phase 3 is complete, add card management to controller:**
 - In-play card management
 - Discard pile with card list
 - Card search/autocomplete
-- Deck count auto-calculation
+- Update production view to display cards
 
 ## Quick Commands
 
 ```bash
+# Production view overlay
+poetry run bpp-production
+
 # Controller app
 poetry run bpp-controller
 
@@ -65,8 +92,7 @@ poetry run bpp-sync
 poetry run bpp-mqtt-test
 
 # Monitor MQTT messages
-poetry run python test_controller.py
-# Or: mosquitto_sub -h localhost -t 'supershow/#' -v
+mosquitto_sub -h localhost -t 'supershow/#' -v
 
 # Check broker status
 ps aux | grep mosquitto
@@ -85,6 +111,7 @@ poetry run pytest
 ## Files to Review
 
 - `docs/CURRENT_STATUS.md` - Full progress report
-- `docs/TESTING_MQTT.md` - MQTT testing guide
+- `src/production/` - Production view implementation (10 files)
+- `src/controller/` - Controller implementation (8 files)
 - `src/shared/mqtt_client.py` - MQTT implementation
-- `src/shared/example_mqtt.py` - MQTT test suite
+- `DESIGN.md` - Full technical design

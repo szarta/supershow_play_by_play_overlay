@@ -1,10 +1,84 @@
 # Current Status - Supershow Overlay Project
 
-**Last Updated**: 2026-01-10
+**Last Updated**: 2026-01-11
 
 ## ✅ Completed Modules
 
-### Phase 1: Core Infrastructure - COMPLETE
+### Phase 1: Core Infrastructure - COMPLETE ✅
+
+### Phase 1 Extended: Controller Application - COMPLETE ✅
+
+**Controller Desktop App** (`src/controller/` - 8 files, ~1,200 lines)
+1. **Main Entry Point** (`main.py`)
+   - Application initialization sequence
+   - Config/database/MQTT setup
+   - Error handling with dialogs
+   - Graceful shutdown
+
+2. **Match Controller** (`controller.py`)
+   - MatchState management
+   - Competitor loading from database
+   - State validation and updates
+   - Finish roll and breakout roll tracking
+
+3. **MQTT Publisher** (`publisher.py`)
+   - High-level publishing abstraction
+   - QoS 1 with retain for state topics
+   - All supershow/* topic publishing
+
+4. **UI Components** (`ui/`)
+   - MainWindow - Application frame
+   - MatchSetupFrame - Match config with crowd meter +/- buttons
+   - PlayerFrame - Player state controls (rolls, counts, finish/breakout)
+   - StatusBar - MQTT connection indicator
+
+**Status**: Fully implemented and tested with Poetry
+
+### Phase 3: Production View Overlay - COMPLETE ✅
+
+**Production View Desktop App** (`src/production/` - 10 files, ~1,400 lines)
+1. **Main Entry Point** (`main.py`)
+   - Application initialization
+   - MQTT subscription setup
+   - Overlay window creation
+
+2. **MQTT Subscriber** (`subscriber.py`)
+   - Subscribes to `supershow/#` wildcard
+   - Routes messages to state manager
+   - Handles all state topic types
+
+3. **State Manager** (`state_manager.py`)
+   - Maintains local MatchState
+   - Loads card data from database
+   - Notifies UI of state changes
+
+4. **Overlay Window** (`ui/overlay_window.py`)
+   - Frameless, transparent, always-on-top
+   - Expand/collapse view switching
+   - Auto-collapse timer (10s)
+   - Window dragging support
+
+5. **Collapsed View** (`ui/collapsed_view.py`)
+   - Minimal 1920x150px bottom bar
+   - Match info + player summaries
+   - Competitor mini-images (60x84px)
+   - Colored roll types, finish/breakout rolls
+
+6. **Expanded View** (`ui/expanded_view.py`)
+   - Detailed 1920x500px view
+   - Full competitor images (200x280px)
+   - Complete player stats
+   - Click background to collapse
+
+7. **UI Utilities** (`ui/utils.py`)
+   - Color helpers (roll/attack colors)
+   - Image loading with caching
+   - Crowd meter rendering (●●●○○○○○○○)
+   - Roll formatting
+
+**Status**: Fully implemented and ready for testing
+
+### Phase 1 Continued: Core Infrastructure - COMPLETE
 
 1. **Configuration System** (`src/shared/config.py` - 232 lines)
    - TOML configuration parsing
@@ -89,54 +163,61 @@ toml>=0.10.2
 
 ## ⏭️ Next Steps
 
-### Immediate: Test MQTT Module
+### Phase 2: Card Zone Management
 
-1. Set up venv:
-   ```bash
-   cd ~/data/overlay_app
-   python3 -m venv venv
-   source venv/bin/activate
-   pip install -r requirements.txt
-   ```
+**Enhance Controller with Card Management:**
+1. In-play card section with add/remove
+2. Discard pile with card list viewer
+3. Card search/autocomplete from database
+4. Publish card zone updates to MQTT
 
-2. Test MQTT:
-   ```bash
-   # Mosquitto is already running at /usr/sbin/mosquitto
-   python -m src.shared.example_mqtt
-   ```
+**Update Production View:**
+1. Display in-play cards as thumbnails
+2. Show discard pile with "Show" button
+3. Card preview popup on click
+4. Scrollable discard viewer
 
-3. Expected outcome:
-   - Topic helpers test (no broker needed)
-   - Basic pub/sub test (2 messages received)
-   - Match state publishing test (controller → production simulation)
-   - Context manager test
+### Testing & Polish
 
-### After MQTT Testing: Build Controller App
+**End-to-End Integration:**
+1. Test controller → production view flow
+2. Verify streaming software compatibility (Streamyard, OBS)
+3. Adjust opacity, colors, sizes
+4. Test window positioning and dragging
 
-Next phase is `src/controller/main.py`:
-- tkinter UI for match management
-- Competitor selection from database
-- Match state management
-- MQTT publishing on state changes
-- Sync database/images on startup
+**Future Enhancements:**
+1. Match recording to JSON
+2. Replay viewer
+3. Fade animations for view transitions
+4. Window resize/scale controls
 
 ## 🗂️ Git Status
 
 - **Repository**: github.com:szarta/supershow_play_by_play_overlay.git
 - **Branch**: main
-- **Last Commit**: c49865b "Add MQTT client module with connection management and pub/sub"
-- **Commits**: 2 total
-  - 523f36f: Initial project structure, database, sync modules
+- **Last Commit**: Ready to commit Phase 3 production view
+- **Commits**: 5 total
+  - 1cba378: Initial commit
+  - 523f36f: Database and sync infrastructure
   - c49865b: MQTT client module
-- **Status**: All changes committed and pushed
+  - 58d832d: Current status docs and venv setup guide
+  - 5d24427: Phase 1 controller with Poetry setup
+- **Status**: Phase 3 production view ready to commit
 
 ## 📊 Statistics
 
-- **Total Lines of Code**: ~2,400 lines
-- **Modules Complete**: 5/5 (Phase 1 complete)
+- **Total Lines of Code**: ~5,600 lines
+- **Modules Complete**: Phase 1 ✅, Controller ✅, Phase 3 Production View ✅
+- **Files Created**: 28 total
+  - Shared: 7 files
+  - Controller: 8 files
+  - Production: 10 files
+  - Docs: 3 files
 - **Cards in Database**: 5,562
+- **Competitors**: 1,094
 - **Images Downloaded**: 4,375
-- **MQTT Topics Defined**: 25+
+- **MQTT Topics**: 25+ defined and implemented
+- **Poetry Scripts**: 4 (controller, production, sync, mqtt-test)
 
 ## 🐛 Known Issues
 

@@ -28,6 +28,7 @@ trove-classifiers = "^2025.12.1.14"
 
 [tool.poetry.scripts]
 bpp-controller = "src.controller.main:main"
+bpp-production = "src.production.main:main"
 bpp-sync = "src.shared.example_usage:main"
 bpp-mqtt-test = "src.shared.example_mqtt:main"
 
